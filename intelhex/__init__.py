@@ -850,7 +850,9 @@ class IntelHex(object):
                         - ignore: ignore other data and keep current data
                                   in overlapping region;
                         - replace: replace data with other data
-                                  in overlapping region.
+                                  in overlapping region;
+                        - identical: raising OverlapError if data is not
+                                  identical.
 
         @raise  TypeError       if other is not instance of IntelHex
         @raise  ValueError      if other is the same object as self 
@@ -863,9 +865,9 @@ class IntelHex(object):
             raise TypeError('other should be IntelHex object')
         if other is self:
             raise ValueError("Can't merge itself")
-        if overlap not in ('error', 'ignore', 'replace'):
+        if overlap not in ('error', 'ignore', 'replace', 'identical'):
             raise ValueError("overlap argument should be either "
-                "'error', 'ignore' or 'replace'")
+                "'error', 'ignore', 'replace' or 'identical'")
         # merge data
         this_buf = self._buf
         other_buf = other._buf
@@ -876,6 +878,9 @@ class IntelHex(object):
                         'Data overlapped at address 0x%X' % i)
                 elif overlap == 'ignore':
                     continue
+                elif overlap == 'identical' and this_buf[i] != other_buf[i]:
+                    raise AddressOverlapError(
+                        'Data at address 0x%X is different: 0x%X vs. 0x%X' % (i, this_buf[i], other_buf[i]))
             this_buf[i] = other_buf[i]
         # merge start_addr
         if self.start_addr != other.start_addr:
